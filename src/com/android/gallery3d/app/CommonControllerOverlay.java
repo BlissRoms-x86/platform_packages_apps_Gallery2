@@ -132,6 +132,10 @@ public abstract class CommonControllerOverlay extends FrameLayout implements
         return view;
     }
 
+    public boolean isPlaying() {
+        return (mState == State.PLAYING);
+    }
+
     @Override
     public void setListener(Listener listener) {
         this.mListener = listener;

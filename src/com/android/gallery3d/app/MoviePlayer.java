@@ -378,6 +378,9 @@ public class MoviePlayer implements
     @Override
     public void onSeekStart() {
         mDragging = true;
+        if(mController.isPlaying()){
+            mVideoView.pause();
+        }
     }
 
     @Override
@@ -388,6 +391,9 @@ public class MoviePlayer implements
     @Override
     public void onSeekEnd(int time, int start, int end) {
         mDragging = false;
+        if(mController.isPlaying()){
+            mVideoView.start();
+        }
         mVideoView.seekTo(time);
         setProgress();
     }
