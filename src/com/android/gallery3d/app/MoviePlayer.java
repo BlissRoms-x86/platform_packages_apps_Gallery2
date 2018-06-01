@@ -94,6 +94,7 @@ public class MoviePlayer implements
 
     // If the time bar is visible.
     private boolean mShowing;
+    private boolean mPrepared = false;
 
     private Virtualizer mVirtualizer;
 
@@ -154,6 +155,7 @@ public class MoviePlayer implements
         mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer player) {
+                mPrepared = true;
                 if (!mVideoView.canSeekForward() || !mVideoView.canSeekBackward()) {
                     mController.setSeekable(false);
                 } else {
@@ -189,7 +191,7 @@ public class MoviePlayer implements
         if (savedInstance != null) { // this is a resumed activity
             mVideoPosition = savedInstance.getInt(KEY_VIDEO_POSITION, 0);
             mResumeableTime = savedInstance.getLong(KEY_RESUMEABLE_TIME, Long.MAX_VALUE);
-            mVideoView.start();
+            startVideo();
             mVideoView.suspend();
             mHasPaused = true;
         } else {
@@ -277,9 +279,12 @@ public class MoviePlayer implements
     public void onPause() {
         mHasPaused = true;
         mHandler.removeCallbacksAndMessages(null);
-        mVideoPosition = mVideoView.getCurrentPosition();
+        if (mPrepared) {
+            mVideoPosition = mVideoView.getCurrentPosition();
+        }
         mBookmarker.setBookmark(mUri, mVideoPosition, mVideoView.getDuration());
         mVideoView.suspend();
+        mPrepared = false;
         mResumeableTime = System.currentTimeMillis() + RESUMEABLE_TIMEOUT;
     }
 
