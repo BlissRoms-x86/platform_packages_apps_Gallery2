@@ -380,7 +380,7 @@ public class SaveImage {
                     // After this call, mSelectedImageUri will be actually
                     // pointing at the new file mDestinationFile.
                     savedUri = SaveImage.linkNewFileToUri(mContext, mSelectedImageUri,
-                            mDestinationFile, time, !flatten);
+                            mDestinationFile, time, false);
                 }
             }
             if (mCallback != null) {
@@ -498,6 +498,16 @@ public class SaveImage {
         // Maintain the suffix during move
         String to = newSrcFile.getName();
         String from = srcFile.getName();
+
+        // Android Q doesn't allow to access file real file path from uri
+        if (from.lastIndexOf(".") == -1) {
+            from = getDisplayName(mContext, srcUri);
+        }
+        if (from == null) {
+            Log.d(LOGTAG, "Source file is not a local file, no update.");
+            return srcUri;
+        }
+
         to = to.substring(to.lastIndexOf("."));
         from = from.substring(from.lastIndexOf("."));
 
@@ -586,6 +596,39 @@ public class SaveImage {
         } else {
             return null;
         }
+    }
+
+    private String getDisplayName(Context context, Uri srcUri) {
+        if (srcUri == null) {
+            Log.e(LOGTAG, "srcUri is null.");
+            return null;
+        }
+
+        String scheme = srcUri.getScheme();
+        if (scheme == null) {
+            Log.e(LOGTAG, "scheme is null.");
+            return null;
+        }
+
+        final String[] displayName = new String[1];
+        if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
+            if (srcUri.getAuthority().equals(MediaStore.AUTHORITY)) {
+                querySource(context, srcUri, new String[] {
+                                ImageColumns.DISPLAY_NAME
+                        },
+                        new ContentResolverQueryCallback() {
+
+                            @Override
+                            public void onCursorResult(Cursor cursor) {
+                                int nameColumnIndex = cursor.getColumnIndex(ImageColumns.DISPLAY_NAME);
+                                displayName[0] = cursor.getString(nameColumnIndex);
+                            }
+                        });
+            }
+        }
+
+        return displayName[0];
+
     }
 
     /**
@@ -679,9 +722,6 @@ public class SaveImage {
                     Images.Media.EXTERNAL_CONTENT_URI, values);
         } else {
             context.getContentResolver().update(sourceUri, values, null, null);
-            if (oldSelectedFile.exists()) {
-                oldSelectedFile.delete();
-            }
         }
         return result;
     }
