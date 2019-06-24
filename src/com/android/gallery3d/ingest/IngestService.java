@@ -23,6 +23,7 @@ import com.android.gallery3d.ingest.data.MtpClient;
 import com.android.gallery3d.ingest.data.MtpDeviceIndex;
 
 import android.annotation.TargetApi;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -63,6 +64,9 @@ public class IngestService extends Service implements ImportTask.Listener,
 
   private static final int PROGRESS_UPDATE_INTERVAL_MS = 180;
 
+  private static final String INGESTSERVICE_NOTIFICATION_CHANNEL =
+          "ingestservice_notification_channel";
+
   private MtpClient mClient;
   private final IBinder mBinder = new LocalBinder();
   private ScannerClient mScannerClient;
@@ -85,11 +89,17 @@ public class IngestService extends Service implements ImportTask.Listener,
     super.onCreate();
     mScannerClient = new ScannerClient(this);
     mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    NotificationChannel notificationChannel = new NotificationChannel(
+            INGESTSERVICE_NOTIFICATION_CHANNEL,
+            this.getString(R.string.app_name),
+            NotificationManager.IMPORTANCE_HIGH);
+    mNotificationManager.createNotificationChannel(notificationChannel);
     mNotificationBuilder = new NotificationCompat.Builder(this);
     // TODO(georgescu): Use a better drawable for the notificaton?
     mNotificationBuilder.setSmallIcon(android.R.drawable.stat_notify_sync)
         .setContentIntent(PendingIntent.getActivity(this, 0,
-            new Intent(this, IngestActivity.class), 0));
+            new Intent(this, IngestActivity.class), 0))
+        .setChannelId(INGESTSERVICE_NOTIFICATION_CHANNEL);
     mIndex = MtpDeviceIndex.getInstance();
     mIndex.setProgressListener(this);
 
